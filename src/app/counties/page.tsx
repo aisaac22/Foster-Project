@@ -1,6 +1,7 @@
 import { query } from "@/lib/db";
-import { num, pct, oneDp } from "@/lib/format";
 import { requireUser } from "@/lib/require-user";
+import { num, pct, oneDp } from "@/lib/format";
+import { Pagination, parsePage, PAGE_SIZE } from "@/components/Pagination";
 
 export const dynamic = "force-dynamic";
 
@@ -15,15 +16,34 @@ interface Row {
   net_outflow: number;
 }
 
-export default async function CountiesPage() {
+export default async function CountiesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   await requireUser();
-  const rows = await query<Row>(`
+  const sp = await searchParams;
+  const page = parsePage(sp.page);
+
+  // Total for pagination — same filter as the main query.
+  const [{ total }] = await query<{ total: string }>(`
+    select count(*)::int as total
+    from v_county_supply_demand
+    where homes_licensed > 0 or children_from_county > 0
+  `);
+  const totalRows = Number(total);
+  const totalPages = Math.ceil(totalRows / PAGE_SIZE);
+
+  const rows = await query<Row>(
+    `
     select county, children_from_county, children_in_local_homes,
            homes_licensed, load_per_home, export_rate, kin_rate, net_outflow
     from v_county_supply_demand
     where homes_licensed > 0 or children_from_county > 0
     order by net_outflow desc
-  `);
+    limit ${PAGE_SIZE} offset ${(page - 1) * PAGE_SIZE}
+  `,
+  );
 
   return (
     <>
@@ -38,39 +58,50 @@ export default async function CountiesPage() {
       {rows.length === 0 ? (
         <p className="empty">No county data yet.</p>
       ) : (
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>County</th>
-              <th className="num">Net outflow</th>
-              <th className="num">From county</th>
-              <th className="num">In local homes</th>
-              <th className="num">Licensed homes</th>
-              <th className="num">Load / home</th>
-              <th className="num">Exported</th>
-              <th className="num">Kin</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.county}>
-                <td>{r.county}</td>
-                <td className="num" style={{ fontWeight: 650 }}>
-                  {num(r.net_outflow)}
-                </td>
-                <td className="num">{num(r.children_from_county)}</td>
-                <td className="num">{num(r.children_in_local_homes)}</td>
-                <td className="num">{num(r.homes_licensed)}</td>
-                <td className="num">{oneDp(r.load_per_home)}</td>
-                <td className="num">{pct(r.export_rate)}</td>
-                <td className="num">{pct(r.kin_rate)}</td>
+        <>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>County</th>
+                <th className="num">Net outflow</th>
+                <th className="num">From county</th>
+                <th className="num">In local homes</th>
+                <th className="num">Licensed homes</th>
+                <th className="num">Load / home</th>
+                <th className="num">Exported</th>
+                <th className="num">Kin</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.county}>
+                  <td>{r.county}</td>
+                  <td className="num" style={{ fontWeight: 650 }}>
+                    {num(r.net_outflow)}
+                  </td>
+                  <td className="num">{num(r.children_from_county)}</td>
+                  <td className="num">{num(r.children_in_local_homes)}</td>
+                  <td className="num">{num(r.homes_licensed)}</td>
+                  <td className="num">{oneDp(r.load_per_home)}</td>
+                  <td className="num">{pct(r.export_rate)}</td>
+                  <td className="num">{pct(r.kin_rate)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <Pagination
+            basePath="/counties"
+            page={page}
+            totalPages={totalPages}
+            params={{}}
+          />
+        </>
       )}
 
-      <p className="meta">{rows.length} counties with homes or children in care.</p>
+      <p className="meta">
+        {totalRows} counties · page {page} of {Math.max(1, totalPages)}
+      </p>
     </>
   );
 }

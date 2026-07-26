@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
 /**
@@ -14,5 +14,23 @@ import { redirect } from "next/navigation";
 export async function requireUser(): Promise<string> {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
+  return userId;
+}
+
+/**
+ * The admin flag lives in Clerk's privateMetadata, which (unlike
+ * publicMetadata) is never sent to the browser — only readable/settable from
+ * server-side code with the secret key. Set with scripts/set-admin.ts.
+ */
+export async function isAdmin(): Promise<boolean> {
+  const user = await currentUser();
+  return user?.privateMetadata?.role === "admin";
+}
+
+/** Call at the top of admin-only pages and Server Actions. Bounces non-admins
+ * to the regular dashboard rather than exposing that the route exists. */
+export async function requireAdmin(): Promise<string> {
+  const userId = await requireUser();
+  if (!(await isAdmin())) redirect("/dashboard");
   return userId;
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ClerkProvider, UserButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
+import { isAdmin } from "@/lib/require-user";
 import "./globals.css";
 
 export const metadata = {
@@ -14,6 +15,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const { userId } = await auth();
+  const admin = userId ? await isAdmin() : false;
 
   return (
     <ClerkProvider afterSignOutUrl="/sign-in">
@@ -22,8 +24,12 @@ export default async function RootLayout({
           <header className="site-header">
             <span className="wordmark">Foster Care Dashboard</span>
             <nav>
+              {userId && <Link href="/dashboard">Dashboard</Link>}
+              {admin && <Link href="/admin/cases">Admin</Link>}
+              <Link href="/homes">All homes</Link>
               <Link href="/at-risk">At-risk homes</Link>
               <Link href="/counties">Counties</Link>
+              <Link href="/recruitment">Recruitment</Link>
               {userId && <UserButton />}
             </nav>
           </header>

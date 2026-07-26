@@ -557,6 +557,10 @@ export async function ingest(input: IngestInput) {
     await db.query("commit");
     log("done");
 
+    log("refreshing materialized view…");
+    await db.query("refresh materialized view v_provider_service_history");
+    log("refresh complete");
+
     return { loadId, counts, discrepancyCount: discrepancies.length };
   } catch (err) {
     try { await db.query("rollback"); } catch { /* no active transaction */ }
