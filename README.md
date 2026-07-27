@@ -24,8 +24,12 @@ views. Several pages read those views:
   county cannot house in its own homes), the clearest recruitment target.
 - **Recruitment** — county × age-band capacity gaps, so recruiters know which
   age ranges are hardest to place.
+- **Trend** — monthly homes gained/lost/active, charted, plus a Federal
+  context panel of national AFCARS figures for scale.
 - **Provider detail** — one home's full service history, placement timeline,
   and retention contact log.
+- **Data dictionary** — plain-English documentation of every page above and
+  what each column on it means, reachable from the Analytics nav dropdown.
 
 On top of the read-only analytics, signed-in staff get a working case system:
 
@@ -38,7 +42,9 @@ On top of the read-only analytics, signed-in staff get a working case system:
 - **Admin** — accounts flagged as admin (see [Setup](#setup)) get a different
   home page instead of the personal dashboard: every case across the team,
   filterable by type/status/owner, paginated, with the ability to permanently
-  delete a case.
+  delete a case, plus a caseload-by-user breakdown. Admins also get a
+  floating upload button (bottom-right, any page) to load a new CSV
+  snapshot from the browser instead of the CLI.
 
 Access is gated by authentication; only accounts created by an administrator can
 sign in. That's separate from the in-app admin *role* above — signing in just
@@ -82,13 +88,18 @@ it automatically after every load.
       materialized.sql  materializes v_provider_service_history + dependents
       cases.sql         case management: cases, case_notes, v_cases
     scripts/
-      ingest.ts         batched CSV ingest pipeline (CLI + reusable function)
+      ingest.ts         thin CLI wrapper around src/lib/ingest.ts (argv + file reads)
       run-sql.ts        runs a .sql file as one batch (use for every db/*.sql —
                          the Neon web editor mangles multi-statement SQL)
       set-admin.ts      grants/revokes the in-app admin role for a Clerk user
+    tests/
+      integration/      real-database tests (cases, ingest) — see Testing below
     src/
       lib/db.ts         shared connection pool + typed query()
+      lib/ingest.ts     the actual CSV ingest pipeline — shared by the CLI and
+                         the admin upload modal's Server Action
       lib/format.ts     display formatting
+      lib/data-dictionary.ts  content for the Data dictionary page
       lib/require-user.ts  per-page auth guards: requireUser, isAdmin, requireAdmin
       proxy.ts          Clerk middleware (auth on all routes)
       app/
@@ -96,6 +107,8 @@ it automatically after every load.
         homes/          all homes, sortable/filterable
         counties/       supply & demand
         recruitment/    county × age-band capacity gaps
+        trend/          monthly chart + federal context
+        data-dictionary/  page-by-page field documentation
         providers/[id]/ provider detail + retention contact log
         dashboard/      home page after sign-in (personal, or admin case list)
         cases/          case detail, new-case form
@@ -154,3 +167,22 @@ Requires Node 20.6+ and a Postgres database (Neon works out of the box).
 
        npm run dev
 
+## Login credentials (development)
+
+| Role | Username | Password |
+|---|---|---|
+| **Admin** | `admin` | `admin` |
+| **Test user** | `testuser` | `testpass` |
+
+The admin account lands on the all-cases admin view (see [Admin](#what-it-does));
+the test user gets the regular personal dashboard.
+
+## Testing
+
+    npm test              # everything
+    npm run test:unit     # pure functions, no database
+    npm run test:integration  # real database — cases, ingest pipeline
+
+Integration tests write real rows (clearly-fake IDs) to whatever `DATABASE_URL`
+points at and clean them up afterward, including re-refreshing the materialized
+view — don't point this at a database you can't afford to touch.
