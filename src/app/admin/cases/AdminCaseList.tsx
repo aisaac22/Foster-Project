@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { query } from "@/lib/db";
 import { Pagination, parsePage, PAGE_SIZE } from "@/components/Pagination";
+import { UsefulLinks } from "@/components/UsefulLinks";
 import { AdminCaseFilters } from "./AdminCaseFilters";
 import { DeleteCaseButton } from "./DeleteCaseButton";
 
@@ -13,6 +14,12 @@ interface CaseRow {
   county_name: string | null;
   n_notes: number;
   updated_at: string;
+}
+
+interface OwnerLoadRow {
+  owner_name: string;
+  open_count: number;
+  total_count: number;
 }
 
 const fmtWhen = (d: string) =>
@@ -71,6 +78,18 @@ export async function AdminCaseList({
     [caseType, status, owner],
   );
 
+  // Team workload — always unfiltered, so it stays a full roster even when
+  // the case list above is scoped to one owner or status.
+  const ownerLoad = await query<OwnerLoadRow>(
+    `select owner_name,
+            count(*) filter (where status = 'open')::int as open_count,
+            count(*)::int as total_count
+     from cases
+     where owner_name is not null
+     group by owner_name
+     order by open_count desc, total_count desc`,
+  );
+
   const pageParams: Record<string, string> = {};
   if (caseType !== "all") pageParams.case_type = caseType;
   if (status !== "all") pageParams.status = status;
@@ -80,8 +99,8 @@ export async function AdminCaseList({
     <>
       <h1>All cases</h1>
       <p className="subtitle">
-        Every case across the team — recruitment and retention, open and
-        closed. Delete removes a case and its notes permanently.
+        Every case across the team, recruitment and retention. 
+        Delete removes a case and its notes permanently.
       </p>
 
       <AdminCaseFilters owners={owners} caseType={caseType} status={status} owner={owner} />
@@ -141,6 +160,34 @@ export async function AdminCaseList({
         {totalRows} case{totalRows === 1 ? "" : "s"} · page {page} of{" "}
         {Math.max(1, totalPages)}
       </p>
+
+      <h2 style={{ fontSize: "1.1rem", margin: "2.5rem 0 0.75rem" }}>
+        Caseload by user
+      </h2>
+      {ownerLoad.length === 0 ? (
+        <p className="empty">No cases assigned yet.</p>
+      ) : (
+        <table className="data-table" style={{ maxWidth: 420 }}>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th className="num">Open</th>
+              <th className="num">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ownerLoad.map((o) => (
+              <tr key={o.owner_name}>
+                <td>{o.owner_name}</td>
+                <td className="num">{o.open_count}</td>
+                <td className="num">{o.total_count}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      <UsefulLinks />
     </>
   );
 }

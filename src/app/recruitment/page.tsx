@@ -66,12 +66,12 @@ export default async function RecruitmentPage() {
 
   return (
     <>
-      <h1>Recruitment — age &amp; capacity gaps</h1>
+      <h1>Recruitment: age &amp; capacity gaps</h1>
       <p className="subtitle">
         Each cell is a county and age band: the ratio of children currently in
         care to the foster homes whose stated preferences accept that age. Red
-        cells are where children need placement and too few homes will take them
-        — your recruitment targets. Counties are ordered by total unmet need.
+        cells are where children need placement and too few homes will take them,
+        your recruitment targets. Counties are ordered by total unmet need.
         Age preferences reflect each home&apos;s current stated range, so this is
         a forward-looking guide, not a record of past matching.
       </p>

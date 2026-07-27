@@ -50,7 +50,7 @@ export default async function CountiesPage({
       <h1>County supply &amp; demand</h1>
       <p className="subtitle">
         Net outflow is the number of a county&apos;s children it cannot house in
-        its own foster homes — the clearest recruitment target. Load per home
+        its own foster homes, the clearest recruitment target. Load per home
         counts children actually placed within the county, so it stays around 2
         even where many children are exported elsewhere.
       </p>

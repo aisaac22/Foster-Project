@@ -112,7 +112,7 @@ export default async function HomesPage({
     <>
       <h1>All homes</h1>
       <p className="subtitle">
-        Every foster home — currently licensed and exited. Sort by any column to
+        Every foster home, currently licensed and exited. Sort by any column to
         browse: your longest-tenured homes, least-used active homes, or the
         exited homes worth learning from. For the daily retention worklist, see{" "}
         <Link href="/at-risk">at-risk homes</Link>.

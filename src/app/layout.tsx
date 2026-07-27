@@ -2,10 +2,12 @@ import Link from "next/link";
 import { ClerkProvider, UserButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { isAdmin } from "@/lib/require-user";
+import { NavDropdown } from "@/components/NavDropdown";
+import { CsvUploadButton } from "@/components/CsvUploadButton";
 import "./globals.css";
 
 export const metadata = {
-  title: "Foster Care Dashboard",
+  title: "Foster Insights",
   description: "Placement analytics for recruitment and retention",
 };
 
@@ -22,18 +24,28 @@ export default async function RootLayout({
       <html lang="en">
         <body>
           <header className="site-header">
-            <span className="wordmark">Foster Care Dashboard</span>
+            <span className="wordmark">
+              <img src="/fosterInsightImg.jpg" alt="" className="wordmark-logo" />
+              Foster Insights
+            </span>
             <nav>
               {userId && <Link href="/dashboard">Dashboard</Link>}
-              {admin && <Link href="/admin/cases">Admin</Link>}
-              <Link href="/homes">All homes</Link>
-              <Link href="/at-risk">At-risk homes</Link>
+              <NavDropdown
+                label="Analytics"
+                items={[
+                  { href: "/at-risk", label: "At-risk homes" },
+                  { href: "/recruitment", label: "Recruitment" },
+                  { href: "/trend", label: "Trend" },
+                  { href: "/data-dictionary", label: "Data dictionary" },
+                ]}
+              />
               <Link href="/counties">Counties</Link>
-              <Link href="/recruitment">Recruitment</Link>
+              <Link href="/homes">All homes</Link>
               {userId && <UserButton />}
             </nav>
           </header>
           <main className="site-main">{children}</main>
+          {admin && <CsvUploadButton />}
         </body>
       </html>
     </ClerkProvider>

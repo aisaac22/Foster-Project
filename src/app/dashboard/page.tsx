@@ -2,6 +2,7 @@ import Link from "next/link";
 import { query } from "@/lib/db";
 import { requireUser, isAdmin } from "@/lib/require-user";
 import { AdminCaseList } from "../admin/cases/AdminCaseList";
+import { UsefulLinks } from "@/components/UsefulLinks";
 
 export const dynamic = "force-dynamic";
 
@@ -118,6 +119,8 @@ export default async function DashboardPage({
       ) : (
         <CaseTable rows={otherOpenCases} showOwner />
       )}
+
+      <UsefulLinks />
     </>
   );
 }

@@ -95,7 +95,7 @@ export default async function AtRiskPage({
       <h1>At-risk homes</h1>
       <p className="subtitle">
         Currently licensed foster homes ranked by likelihood of disengaging or not
-        renewing, based on how actively they take placements — days with a child
+        renewing, based on how actively they take placements, days with a child
         placed, whether they have ever said yes, and how long they have been idle.
         Homes near the top are still licensed and reachable; a retention contact
         now is cheaper than recruiting a replacement.
